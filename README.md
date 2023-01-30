@@ -12,8 +12,8 @@ The code is developed in the programming language R.
 * `vDataMatrix`: double matrix. Each column contains the signal in a concrete direction.
 * `nBack`: number of FMM components to be fitted.
 * `maxIter`: maximum number of iterations for the backfitting algorithm.
-* `lengthAlphaGrid`: number of values in the equally spaced grid for $\alpha$. By default it is set to 48 possible values of $\alpha$.
-* `lengthOmegaGrid`: number of values in the equally spaced grid for $\omega$. By default it is set to 24 possible values of $\omega$.
+* `lengthAlphaGrid`: number of values in the equally spaced grid for $\alpha$. By default it is set to 48.
+* `lengthOmegaGrid`: number of values in the equally spaced grid for $\omega$. By default it is set to 24.
 * `confidenceLevel`: confidence level for the parameter intervals. By default it is set to 0.95.
 * `parallelize`: TRUE to use parallelized procedure to fit FMM model (recommended).
 
