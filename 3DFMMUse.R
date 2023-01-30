@@ -1,29 +1,17 @@
 
-library(openxlsx)
+# Libraries for source code reading
 require(R.utils)
-source("auxMultiFMM.R")
+source("auxMultiFMM.R") # Codes for 3DFMM estimation + CIs
 sourceDirectory("funcionesFMM/")
 
-normBeat <- read.xlsx("param_config.xlsx", "NORM", )
-leadNames <- normBeat[,1]
-leadParams <- normBeat[,-1]
-m <- 5
-n <- 200
-d <- length(leadNames)
-commonSigma <- 45
+# Simulated data with common sigma
+exampleData <- read.csv("exampleData.csv")
 
-paramArray <- array(0, c(m, 5, d))
-for (k in 1:d){ paramArray[,,k] <- matrix(as.numeric(leadParams[k,1:(5*m)]), ncol = 5, byrow = T) }
+FMM3D_output <- fitMultiFMM(vDataMatrix = exampleData, nBack = 5, maxIter = 15, 
+                            parallelize = TRUE, confidenceLevel = 0.95)
 
-simulatedData <- apply(paramArray, 3, function(x){generateFMM(x[1,1], x[,2], x[,3], x[,4], x[,5], 
-                                                              sigmaNoise = commonSigma, length.out = n, plot = F)$y})
-colnames(simulatedData) <- leadNames
-FMM3D_output <- fitMultiFMM(vDataMatrix = simulatedData, nBack = 5, maxIter = 10)
+paramsPerSignal <- FMM3D_output[[1]]; CIs <- FMM3D_output[[2]] # Estimates / CIs
 
-paramsPerSignal <- FMM3D_output[[1]]; CIs <- FMM3D_output[[2]]
-paramsPerSignal
-print(round(CIs[,81:90],3))
-
-
-
+print(paramsPerSignal[[2]]) # Estimated parameters (Lead II)
+print(round(CIs[,81:90],3)) # CIs for alphas and omegas
 
