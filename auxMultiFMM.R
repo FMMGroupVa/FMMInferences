@@ -1,4 +1,3 @@
-
 #### Dependencies ####
 require("RColorBrewer")
 require(R.utils)
@@ -8,10 +7,10 @@ source("precissionMatrix.R")
 
 #### Fit of multiFMM model functions ####
 fitMultiFMM <- function(vDataMatrix, nBack = 5, maxIter = 10, weightError = TRUE, 
-                      lengthAlphaGrid = 40, lengthOmegaGrid = 20, 
+                      lengthAlphaGrid = 48, lengthOmegaGrid = 24, 
                       alphaGrid = seq(0, 2*pi, length.out = lengthAlphaGrid),
                       omegaMin = 0.0001, omegaMax = 1,
-                      omegaGrid = exp(seq(log(0.01), log(1), length.out = lengthOmegaGrid)),
+                      omegaGrid = exp(seq(log(max(0.01, omegaMin)), log(1), length.out = lengthOmegaGrid)),
                       parallelize = TRUE, confidenceLevel = 0.95){
   
   nSignals <- ncol(vDataMatrix)
@@ -34,9 +33,10 @@ fitMultiFMM <- function(vDataMatrix, nBack = 5, maxIter = 10, weightError = TRUE
   
   # Backfitting algorithm: iteration
   currentBack<-1; continueBackfitting<-TRUE
+  cat(paste("Backfitting: ",sep=""))
   
   while(continueBackfitting) {
-
+    cat(paste(currentBack," ",sep=""))
     fmmObjectList<-list()
     paramsPerWave <- replicate(nSignals, simplify = FALSE,
                                data.frame(M=double(), A=double(),
@@ -107,9 +107,10 @@ step1FMM3D <- function(alphaOmegaParameters, vData, timePoints, sigmas = rep(1, 
   alpha <- as.numeric(alphaOmegaParameters[1])
   omega <- as.numeric(alphaOmegaParameters[2])
   tStar <- alpha + 2*atan2(omega*sin((timePoints-alpha)/2), cos((timePoints-alpha)/2))
+  
   fittedValues <- apply(vData, 2, function(x){
     dM <- cbind(rep(1, length(x)), cos(tStar), sin(tStar))
-    mDeltaGamma <- solve(t(dM)%*%dM)%*%t(dM)%*%x
+    mDeltaGamma <- solve(crossprod(dM), t(dM)%*%x)
     yFit <- mDeltaGamma[1] + mDeltaGamma[2]*cos(tStar) + mDeltaGamma[3]*sin(tStar)
     return(yFit)
   })
@@ -136,25 +137,32 @@ logLik3DFMM1 <- function(alphaOmegaParameters, vData, timePoints, sigmas = rep(1
 optimizeAlphaOmega<-function(vDataMatrix, fittedWaves, currentComp,
                              alphaGrid, omegaGrid, errorWeights, usedApply,
                              omegaMax = 0.7){
-  
-  nObs <- nrow(vDataMatrix)
+  nObs<-nrow(vDataMatrix)
+  nSignals <- ncol(vDataMatrix)
   timePoints = seqTimes(nObs)
+  
   grid <- expand.grid(alphaGrid, omegaGrid)
   residualsMatrix <- vDataMatrix
-  for(signalIndex in 1:ncol(vDataMatrix)){
-    residualsMatrix[,signalIndex] <- vDataMatrix[,signalIndex] - apply(as.matrix(fittedWaves[[signalIndex]][,-currentComp]), 1, sum)
+  
+  rssMatrix<-matrix(NA, nrow = nrow(grid), ncol = (nSignals)+2)
+  rssMatrix[,1]<-grid[,1]; rssMatrix[,2]<-grid[,2]
+
+  for(signalIndex in 1:nSignals){
+    vData<-vDataMatrix[,signalIndex]
+    residualsMatrix[,signalIndex] <- vData - apply(as.matrix(fittedWaves[[signalIndex]][,-currentComp]), 1, sum)
+    
+    step1 <- usedApply(FUN = FMM:::step1FMM, X = grid, vData = residualsMatrix[,signalIndex],
+                       timePoints = timePoints)
+    rssMatrix[,signalIndex+2] <- errorWeights[signalIndex]*step1[,6]
   }
   
-  step1FMM3D(grid[1,], vData = residualsMatrix, timePoints = timePoints, sigmas = 1/errorWeights)
-  step1 <- usedApply(FUN = step1FMM3D, X = grid, vData = residualsMatrix,
-                     timePoints = timePoints, sigmas = 1/errorWeights)
-  bestParamsIndex <- which.max(step1[,3])
-  initialParams <- step1[bestParamsIndex, c(1,2)]
-  # cat(initialParams)
+  bestParamsIndex <- which.min(apply(rssMatrix[,-c(1:2)],1,mean))
+  initialParams <- as.numeric(rssMatrix[bestParamsIndex, c(1:2)])
+
   nelderMead <- optim(par = initialParams, fn = logLik3DFMM1, 
                       vData = residualsMatrix, timePoints = timePoints, sigmas = 1/errorWeights, 
                       method = "L-BFGS-B", control = list(fnscale = -1), lower = c(0, omegaGrid[1]), upper = c(2*pi, 1))
-  # cat(" ",nelderMead$par,"\n")
+
   return(nelderMead$par) # Best alpha and omega
   
 }
@@ -245,7 +253,6 @@ recalculateMA<-function(vDatai, paramsPerSignal){
   return(paramsPerSignal)
 }
 
-
 confint <- function(paramsPerSignal, mData,  nBack, nSignals, 
                     confidenceLevel = 0.95, compNames = 1:nBack){
 
@@ -258,10 +265,10 @@ confint <- function(paramsPerSignal, mData,  nBack, nSignals,
   
   # Sigma estimation
   r2 <- sapply(1:length(paramsPerSignal), function(x) sum(paramsPerSignal[[x]][substr(rownames(paramsPerSignal[[x]]),1,1)!="X",]$Var))
-  sigmaHat <- sqrt(sum((1-r2)*apply(mData, 2, function(vData){sum((vData - mean(vData))^2)}))/(d*n - (1+(1+nSignals)*2*nBack)))
+  sigmaHat <- sqrt(sum((1-r2)*apply(mData, 2, function(vData){sum((vData - mean(vData))^2)}))/(nSignals*nrow(mData) - (1+(1+nSignals)*2*nBack)))
   
   # CIs with F0
-  tF0F0 <- precissionMatrixFMM3d(estimatesArray, seqTimes(200))
+  tF0F0 <- precissionMatrixFMM3d(estimatesArray, seqTimes(nrow(mData)))
   seHat <- sqrt(diag(sigmaHat^2*solve(tF0F0)))[-1]
   lInf <- estimatedParameters - qnorm(0.5+confidenceLevel/2)*seHat
   lSup <- estimatedParameters + qnorm(0.5+confidenceLevel/2)*seHat
@@ -279,4 +286,3 @@ confint <- function(paramsPerSignal, mData,  nBack, nSignals,
   rownames(CIs) <- c(paste0("Lower (", 100*confidenceLevel, "%)"), "Estimate", paste0("Upper (", 100*confidenceLevel, "%)"))
   return(CIs)
 }
-
