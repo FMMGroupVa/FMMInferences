@@ -26,6 +26,9 @@ An R list with two elements:
 * `Confints`: confidence intervals for each parameter. The FMM parameters are named **parameter_component_direction**.
 * It also returns a plot of the signal prediction and the fitted waves in the given directions.
 
+<p align="center">
+  <img src="https://github.com/FMMGroupVa/FMMInferences/blob/main/fittingExample.pdf" width="450" height="300" alt>
+</p>
 
 
 ## References
