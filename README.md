@@ -24,10 +24,11 @@ If `vDataMatrix` columns are named, the names will be used for label the directi
 An R list with two elements:
 * `paramsPerWave`: an `R` list. Each element of the list contains the estimated values of the FMM parameters in a concrete direction. 
 * `Confints`: confidence intervals for each parameter. The FMM parameters are named **parameter_component_direction**.
-* It also returns a plot of the signal prediction and the fitted waves in the given directions.
+
+It also shows a plot of the signal prediction and the fitted waves in the given directions.
 
 <p align="center">
-  <img src="https://github.com/FMMGroupVa/FMMInferences/blob/main/fittingExample.pdf" width="450" height="300" alt>
+  <img src="https://user-images.githubusercontent.com/117477025/215548488-4ed0d281-b2b4-4fd3-9d24-3c6e1c649e94.jpg" width="900" height="700" alt>
 </p>
 
 
