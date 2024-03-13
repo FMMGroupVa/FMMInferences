@@ -81,7 +81,7 @@ fitMultiFMM <- function(vDataMatrix, nBack = 5, maxIter = 10, weightError = TRUE
   }
 
   # Reorder waves by mean Var across channels
-  meanVar <- apply(matrix(unlist(lapply(FMM3D_output$paramsPerWave, FUN = function(x){
+  meanVar <- apply(matrix(unlist(lapply(paramsPerWave, FUN = function(x){
     return(x$Var)
   })), ncol = 5, byrow = T), 2, mean)
   waveOrder <- order(meanVar, decreasing = T)
