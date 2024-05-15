@@ -50,12 +50,15 @@ plotMultiFMM<-function(vDatai, fittedWaves, currentBack, paramsPerSignal,
                      paramsPerSignal = paramsPerSignal[[x]], currentBack=currentBack,
                      filename=filename, leadName=leadNames[x]))
   if(addedEmptyPlots!=0) for(i in 1:(addedEmptyPlots/2)) emptyPlotFun()
-  
-  sapply(1:nSignals,function(y)
-    plotMultiFMM_Comps(vDatai=vDatai[!is.na(vDatai[y,]),y], fittedWaves = fittedWaves[[y]],
-                       paramsPerSignal = paramsPerSignal[[y]],
-                       currentBack=currentBack, filename=filename, leadName=leadNames[y],
-                       plotLegend=FALSE))
+
+  if(nrow(paramsPerSignal[[1]])>1){
+    sapply(1:nSignals,function(y)
+      plotMultiFMM_Comps(vDatai=vDatai[!is.na(vDatai[y,]),y], fittedWaves = fittedWaves[[y]],
+                         paramsPerSignal = paramsPerSignal[[y]],
+                         currentBack=currentBack, filename=filename, leadName=leadNames[y],
+                         plotLegend=FALSE))
+  }
+
   if(addedEmptyPlots!=0) for(i in 1:(addedEmptyPlots/2)) emptyPlotFun()
   
   # Add legend to the plot
@@ -164,3 +167,4 @@ plotMultiFMM_Comps<-function(vDatai, fittedWaves, paramsPerSignal,
   
   if(plotToFile) dev.off()
 }
+
