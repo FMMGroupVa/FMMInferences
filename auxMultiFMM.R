@@ -83,14 +83,16 @@ fitMultiFMM <- function(vDataMatrix, nBack = 5, maxIter = 10, weightError = TRUE
   # Reorder waves by mean Var across channels
   meanVar <- apply(matrix(unlist(lapply(paramsPerWave, FUN = function(x){
     return(x$Var)
-  })), ncol = 5, byrow = T), 2, mean)
+  })), ncol = nSignals, byrow = F), 1, mean)
+  
   waveOrder <- order(meanVar, decreasing = T)
 
   for (i in 1:nSignals) {
     paramsPerWave[[i]] <- (paramsPerWave[[i]])[waveOrder,]
     fittedWaves[[i]] <- (fittedWaves[[i]])[,waveOrder]
   }
-
+  
+  
   plotMultiFMM(vDatai = vDataMatrix, fittedWaves = fittedWaves, currentBack = currentBack,
                leadNames = colnames(vDataMatrix), paramsPerSignal = paramsPerWave,
                plotToFile = plotToFile, filename = filename)
@@ -102,11 +104,9 @@ fitMultiFMM <- function(vDataMatrix, nBack = 5, maxIter = 10, weightError = TRUE
   CIs <- confint(paramsPerSignal = paramsPerWave, mData = vDataMatrix,
                  nBack = nBack, nSignals = nSignals,
                  compNames = 1:nBack,  confidenceLevel = 0.95)
-
   #### Return results ####
   return(list(paramsPerWave = paramsPerWave, Confints = CIs))
 }
-
 #### Internal multiFMM functions ####
 ## MultiFMM, first step: optimize common parameters
 
