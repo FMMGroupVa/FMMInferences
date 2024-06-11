@@ -4,9 +4,12 @@ emptyPlotFun<-function() plot(1, type = "n", axes=FALSE, xlab="", ylab="")
 
 
 plotMultiFMM<-function(vDatai, timePoints = seqTimes(nrow(vDatai)), 
-                       paramsPerSignal, components = F, nPlotCols = 5, 
-                       filename=NA, leadNames=1:length(paramsPerSignal), 
+                       paramsPerSignal, channels = 1:ncol(vDatai), components = F, nPlotCols = 5, 
+                       filename=NA, leadNames=1:length(channels), 
                        path="./", plotToFile=TRUE){
+
+  vDatai <- vDatai[,channels]
+  paramsPerSignal <- paramsPerSignal[channels]
 
   nObs <- nrow(vDatai)
   nSignals <- ncol(vDatai)
