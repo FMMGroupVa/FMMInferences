@@ -5,10 +5,11 @@ precissionMatrixFMM3d <- function(paramArrayArg, t){
   d <- dim(paramArrayArg)[3]
   m <- dim(paramArrayArg)[1]
   
-  alphas <- paramArrayArg[,3,2]
-  omegas <- paramArrayArg[,5,2]
+  alphas <- paramArrayArg[,3,1]
+  omegas <- paramArrayArg[,5,1]
   deltas <- as.matrix(apply(paramArrayArg, 3, function(x){x[,2]*cos(x[,4])}))
   gammas <- as.matrix(apply(paramArrayArg, 3, function(x){-x[,2]*sin(x[,4])}))
+  
   # Pre-calculus tl, u(alpha, omega, tl), (alpha, omega, tl)
   tl <- apply(cbind(alphas, omegas), 1, function(x){2*atan(x[2]*tan((t-x[1])/2))})
   u <- t(apply(tl, 1, sin))

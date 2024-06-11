@@ -1,15 +1,23 @@
 
 #### Plot multiFMM functions ####
-emptyPlotFun2<-function() plot(1, type = "n", axes=FALSE, xlab="", ylab="")
+emptyPlotFun<-function() plot(1, type = "n", axes=FALSE, xlab="", ylab="")
 
-plotMultiFMM2<-function(vDatai, fittedWaves, currentBack, paramsPerSignal,
-                       filename=NA, leadNames=1:length(paramsPerSignal), path="./",
-                       plotToFile=TRUE){
+plotMultiFMM<-function(vDatai, timePoints = seqTimes(nrow(vDatai)), 
+                       paramsPerSignal, channels = 1:ncol(vDatai), components = F, nPlotCols = 5, 
+                       filename=NA, leadNames=1:length(channels), 
+                       path="./", plotToFile=TRUE){
+
+  vDatai <- vDatai[,channels]
+  paramsPerSignal <- paramsPerSignal[channels]
   
-  nSignals<-length(paramsPerSignal)
+  nObs <- nrow(vDatai)
+  nSignals <- ncol(vDatai)
+  leadNames <- colnames(vDatai)
+  maxComp <- nrow(paramsPerSignal[[1]])
+  nPlotRows = ceiling(nSignals/nPlotCols) # Number of row for fixed columns
   if(plotToFile){
     if(!is.na(filename)){
-      png(filename=paste(path,filename,"_Back_",currentBack,".png",sep=""), type = "cairo-png",
+      png(filename=paste(path,filename,".png",sep=""), type = "cairo-png",
           width=ifelse(nSignals<=12 | nSignals%%3!=0,
                        200*nSignals,50*nSignals),
           height=ifelse(nSignals<=12, 600,
@@ -18,70 +26,59 @@ plotMultiFMM2<-function(vDatai, fittedWaves, currentBack, paramsPerSignal,
       stop("Filename must be provided if plotToFile=TRUE")
     }
   }
+
+  fittedWaves <- list() # Calcularlas
   
-  addedEmptyPlots<-0
-  if(nSignals>12 & nSignals%%3==0){
-    sixthSignals<-nSignals/3; sumPlotOrder<-1:nSignals; comPlotOrder<-(nSignals+1):(2*nSignals)
-    plotOrder<-c(rbind(sumPlotOrder, comPlotOrder))
-    plotLayout <- matrix(plotOrder, nrow = sixthSignals, ncol = (2*nSignals)/sixthSignals)
-    plotLayout <- rbind(plotLayout, rep((2*nSignals)+1, (2*nSignals)/sixthSignals)) 
-    layout(mat = plotLayout, heights = c(rep(0.95/sixthSignals,sixthSignals),0.05))
-    par(mar=c(0,0,0,0))
-  }else if(nSignals>4){
-    plotOrder<-1:(2*nSignals)
-    halfSignals<-ceiling(nSignals/2)
-    while(length(plotOrder)%%4!=0 | length(plotOrder)%%halfSignals!=0){
-      plotOrder<-c(plotOrder, (tail(plotOrder, 1)+1)); addedEmptyPlots<-addedEmptyPlots+1
+  for(s in 1:nSignals){
+
+    fittedWaves[[s]] <- matrix(0, nrow = nObs, ncol = maxComp)
+    for (k in 1:maxComp) {
+      pars <- as.numeric((paramsPerSignal[[s]])[k,])
+      fittedWaves[[s]][,k] <- pars[2]*cos(pars[4] + 2*atan(pars[5]*tan((timePoints-pars[3])/2)))
     }
-    plotLayout <- matrix(plotOrder, nrow = 4, ncol = halfSignals, byrow = TRUE)
-    plotLayout <- rbind(plotLayout, rep((2*nSignals)+addedEmptyPlots+1, halfSignals))
-    layout(mat = plotLayout, heights = c(0.1,0.1,0.1,0.1,0.05))
-    par(mar=c(0.1,0.1,0.1,0.1))
+  }
+
+  #predictedSignals <-  lapply(fittedWaves, function(x){apply(x, 2, sum)})
+
+  if(components){
+    layout(matrix(c(1:(nPlotRows * nPlotCols), rep(nPlotRows*nPlotCols+1,nPlotCols)), 
+                  nrow=nPlotRows+1, byrow = T),
+           heights=c(rep(3, times = nPlotRows),1))
+    
+    for (k in 1:(nPlotRows* nPlotCols)) {
+      if(k<=nSignals){
+        plotMultiFMM_Comps(vDatai=vDatai[,k], fittedWaves = fittedWaves[[k]],
+                           paramsPerSignal = paramsPerSignal[[k]],
+                           filename=filename, leadName=leadNames[k],
+                           plotLegend=FALSE)
+      }else{
+        emptyPlotFun()
+      }
+    }
+    emptyPlotFun()
+    
+    usedColors<-c(brewer.pal(n = 9, name = "Set1"), "aquamarine", "saddlebrown")
+    usedColors<-usedColors[1:nrow(paramsPerSignal[[1]])]
+    names(usedColors)<-1:nrow(paramsPerSignal[[1]])
+    legend(x = "top",inset = 0, legend = names(usedColors), col=usedColors,
+           lwd=5, cex=1.2, horiz = TRUE)
+
   }else{
-    plotOrder<-1:(2*nSignals)
-    plotLayout <- matrix(plotOrder, nrow = 2, ncol = nSignals, byrow = TRUE)
-    plotLayout <- rbind(plotLayout, rep((2*nSignals)+1, nSignals))
-    layout(mat = plotLayout,heights = c(0.4,0.4,0.2))
-    par(mar=c(0.1,0.1,0.1,0.1))
+    par(mfrow = c(nPlotRows, nPlotCols))
+    for (k in 1:nSignals) {
+      plotMultiFMM_Sum(vDatai=vDatai[,k], fittedWaves = fittedWaves[[k]],
+                       paramsPerSignal = paramsPerSignal[[k]],
+                       filename=filename, leadName=leadNames[k])
+    }
   }
-  
-  sapply(1:nSignals,function(x)
-    plotMultiFMM_Sum2(vDatai=vDatai[!is.na(vDatai[x,]),x], fittedWaves = fittedWaves[[x]],
-                     paramsPerSignal = paramsPerSignal[[x]], currentBack=currentBack,
-                     filename=filename, leadName=leadNames[x]))
-  if(addedEmptyPlots!=0) for(i in 1:(addedEmptyPlots/2)) emptyPlotFun()
+  par(mfrow = c(1, 1))
 
-  if(nrow(paramsPerSignal[[1]])>1){
-    sapply(1:nSignals,function(y)
-      plotMultiFMM_Comps2(vDatai=vDatai[!is.na(vDatai[y,]),y], fittedWaves = fittedWaves[[y]],
-                         paramsPerSignal = paramsPerSignal[[y]],
-                         currentBack=currentBack, filename=filename, leadName=leadNames[y],
-                         plotLegend=FALSE))
-  }
-
-  if(addedEmptyPlots!=0) for(i in 1:(addedEmptyPlots/2)) emptyPlotFun()
-  
-  # Add legend to the plot
-  emptyPlotFun()
-  usedColors<-c(brewer.pal(n = 9, name = "Set1"), "aquamarine", "saddlebrown")
-  usedColors<-usedColors[1:nrow(paramsPerSignal[[1]])]
-  names(usedColors)<-1:nrow(paramsPerSignal[[1]])
-  
-  legend(x = "top",inset = 0, legend = names(usedColors), col=usedColors,
-         lwd=5, cex=1.2, horiz = TRUE)
-  
   if(plotToFile) dev.off()
 }
 
-plotMultiFMM_Sum2<-function(vDatai, fittedWaves, paramsPerSignal, currentBack, leadName,
+plotMultiFMM_Sum<-function(vDatai, fittedWaves, paramsPerSignal, leadName,
                            filename=NA, path="./", plotToFile=FALSE){
   par(mar = c(2,2,3,1))
-  
-  if(!is.na(filename)){
-    ecgId_beatId<-strsplit(filename, "_")[[1]]
-    ecgId<-substr(ecgId_beatId[1], 3, nchar(ecgId_beatId[1]))
-    beatId<-ecgId_beatId[2]
-  }
   
   nObs<-length(vDatai)
   assignedCondition<-rep(TRUE,nrow(paramsPerSignal))
@@ -95,11 +92,11 @@ plotMultiFMM_Sum2<-function(vDatai, fittedWaves, paramsPerSignal, currentBack, l
   totalR2<-sum(assignedResults$Var)
   
   if(plotToFile){
-    png(filename=paste(path,"/02 Results/Plots/",filename,"_Back_",currentBack,".png",sep=""),
+    png(filename=paste(path,"/02 Results/Plots/",filename,".png",sep=""),
         width=1200, height=900)
   }
   
-  mainText<-paste(leadName,", back. ",currentBack,sep="")
+  mainText<-leadName
   
   assignedWavesSumPlot<-assignedWavesSum
   
@@ -114,8 +111,8 @@ plotMultiFMM_Sum2<-function(vDatai, fittedWaves, paramsPerSignal, currentBack, l
   if(plotToFile) dev.off()
 }
 
-plotMultiFMM_Comps2<-function(vDatai, fittedWaves, paramsPerSignal,
-                             currentBack, leadName, filename=NA, path="./",
+plotMultiFMM_Comps<-function(vDatai, fittedWaves, paramsPerSignal,
+                             leadName, filename=NA, path="./",
                              plotLegend=TRUE, plotToFile=FALSE){
   par(mar = c(2,2,1,1))
   
@@ -128,7 +125,7 @@ plotMultiFMM_Comps2<-function(vDatai, fittedWaves, paramsPerSignal,
   otherWavesColors<-rev(brewer.pal(n = 7, name = "Set2"))
   
   if(plotToFile){
-    png(filename=paste(path,"/02 Results/Plots/",filename,"_Back_",currentBack,".png",sep=""),
+    png(filename=paste(path,"/02 Results/Plots/",filename,".png",sep=""),
         width=1200, height=900)
   }
   
@@ -167,5 +164,7 @@ plotMultiFMM_Comps2<-function(vDatai, fittedWaves, paramsPerSignal,
   
   if(plotToFile) dev.off()
 }
+
+
 
 

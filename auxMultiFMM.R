@@ -1,9 +1,11 @@
 #### Dependencies ####
 require("RColorBrewer")
 require(R.utils)
-sourceDirectory("funcionesFMM/")
-source("auxMultiFMMPlotNew.R")
-source("precissionMatrix.R")
+currentPath <- dirname(rstudioapi::getSourceEditorContext()$path)
+sourceDirectory(paste0(currentPath,"/funcionesFMM/"))
+source(paste0(currentPath,"/auxMultiFMMPlotNew.R"))
+source(paste0(currentPath,"/auxMultiFMMPlot.R"))
+source(paste0(currentPath,"/precissionMatrix.R"))
 
 #### Fit of multiFMM model functions ####
 fitMultiFMM <- function(vDataMatrix, timePoints = seqTimes(nrow(vDataMatrix)), nBack = 5, maxIter = 10, weightError = TRUE,
@@ -11,6 +13,7 @@ fitMultiFMM <- function(vDataMatrix, timePoints = seqTimes(nrow(vDataMatrix)), n
                       alphaGrid = seq(0, 2*pi, length.out = lengthAlphaGrid),
                       omegaMin = 0.001, omegaMax = 1,
                       omegaGrid = exp(seq(log(max(omegaMin, omegaMin)), log(1), length.out = lengthOmegaGrid)),
+                      showPredeterminedPlot = F,
                       parallelize = TRUE, confidenceLevel = 0.95, plotToFile = F, filename = NA){
 
   nSignals <- ncol(vDataMatrix)
@@ -99,10 +102,12 @@ fitMultiFMM <- function(vDataMatrix, timePoints = seqTimes(nrow(vDataMatrix)), n
     fittedWaves[[i]] <- (fittedWaves[[i]])[,waveOrder]
   }
 
+  if(showPredeterminedPlot){
+    plotMultiFMM2(vDatai = vDataMatrix, fittedWaves = fittedWaves, currentBack = currentBack,
+                 leadNames = colnames(vDataMatrix), paramsPerSignal = paramsPerWave,
+                 plotToFile = plotToFile, filename = filename)
+  }
 
-  # plotMultiFMM(vDatai = vDataMatrix, fittedWaves = fittedWaves, currentBack = currentBack,
-  #              leadNames = colnames(vDataMatrix), paramsPerSignal = paramsPerWave,
-  #              plotToFile = plotToFile, filename = filename)
 
   # Unname waves and stop parallelized cluster
   for(i in 1:nSignals) rownames(paramsPerWave[[i]])<-1:nBack
