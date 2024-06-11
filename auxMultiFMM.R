@@ -1,11 +1,11 @@
 #### Dependencies ####
 require("RColorBrewer")
 require(R.utils)
-currentPath <- dirname(rstudioapi::getSourceEditorContext()$path)
-sourceDirectory(paste0(currentPath,"/funcionesFMM/"))
-source(paste0(currentPath,"/auxMultiFMMPlotNew.R"))
-source(paste0(currentPath,"/auxMultiFMMPlot.R"))
-source(paste0(currentPath,"/precissionMatrix.R"))
+
+sourceDirectory("funcionesFMM/",modifiedOnly=F)
+source("auxMultiFMMPlotNew.R")
+source("auxMultiFMMPlot.R")
+source("precissionMatrix.R")
 
 #### Fit of multiFMM model functions ####
 fitMultiFMM <- function(vDataMatrix, timePoints = seqTimes(nrow(vDataMatrix)), nBack = 5, maxIter = 10, weightError = TRUE,
