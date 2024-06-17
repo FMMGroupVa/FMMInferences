@@ -39,7 +39,7 @@ Confidence intervals based on the asymptotic parameter covariance matrix propose
 If `vDataMatrix` columns are named, and the confidence intervals for the parameters
 
 ### Return values
-Confidence intervals for each parameter. The FMM parameters **delta** and **gamma** are named as **parameter_component_direction**. **alpha** and **omega** parameters are common along directions and they are named **parameter_component**.
+Confidence intervals for each parameter. The FMM parameters **delta** and **gamma** are named as **parameter_component_direction**. Parameters **alpha** and **omega** are common along directions and they are named **parameter_component**.
 
 Confidence interval (95%) for $\alpha$ and $\omega$ parameters (data: `exampleData.csv`):
 
