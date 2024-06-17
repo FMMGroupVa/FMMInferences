@@ -5,7 +5,7 @@ The code is developed in the programming language R.
 
 ## `fitMultiFMM` function description.
 
-`fitMultiFMM` performs the estimation of a 3DFMM model and it's confidence intervals based on the asymptotic parameter covariance matrix proposed in [1].
+`fitMultiFMM` performs the estimation of a 3DFMM model .
 
 ### Arguments
 
@@ -14,17 +14,35 @@ The code is developed in the programming language R.
 * `maxIter`: maximum number of iterations for the backfitting algorithm.
 * `lengthAlphaGrid`: number of values in the equally spaced grid for $\alpha$. By default it is set to 48.
 * `lengthOmegaGrid`: number of values in the equally spaced grid for $\omega$. By default it is set to 24.
-* `confidenceLevel`: confidence level for the parameter intervals. By default it is set to 0.95.
-* `parallelize`: TRUE to use parallelized procedure to fit FMM model (recommended).
+* `showPredeterminedPlot`: logical. Is FMM model plotted after fitting?
 
-If `vDataMatrix` columns are named, the names will be used for label the directions in the resulting plot and the confidence intervals for the parameters. 
+If `vDataMatrix` columns are named, the names will be used to label the directions in the resulting plot. 
+
+### Return values
+An `R` list. Each element of the list contains the estimated values of the FMM parameters in a concrete direction. 
+
+Plot of the signal prediction and the fitted waves in the example data (`exampleData.csv`):
+
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/117477025/215553083-31e7b77b-7d87-479f-a305-4445fadae784.jpg" width="900" height="700" alt>
+</p>
+
+## `confintFMM` function description.
+
+Confidence intervals based on the asymptotic parameter covariance matrix proposed in [1].
+
+### Arguments
+* `paramsPerSignal` - output of `fitMultiFMM` function
+* `vDataMatrix` - data matrix fitted. Used for the estimate of sigma
+* `confidenceLevel`: confidence level for the parameter intervals. By default, it is set to 0.95.
+
+If `vDataMatrix` columns are named, and the confidence intervals for the parameters
 
 ### Return values
 
 An R list with two elements:
-* `paramsPerWave`: an `R` list. Each element of the list contains the estimated values of the FMM parameters in a concrete direction. 
+* `paramsPerWave`: 
 * `Confints`: confidence intervals for each parameter. The FMM parameters are named **parameter_component_direction**.
-
 
 Confidence interval (95%) for $\alpha$ and $\omega$ parameters (data: `exampleData.csv`):
 
@@ -40,15 +58,6 @@ Confidence interval (95%) for $\alpha$ and $\omega$ parameters (data: `exampleDa
 | Lower (95%) | 0,0299  | 0,1823  | 0,0243  | 0,0284  | 0,1003  |
 | Estimate    | 0,0318  | 0,1926  | 0,0272  | 0,0332  | 0,1279  |
 | Upper (95%) | 0,0336  | 0,2029  | 0,0301  | 0,0380  | 0,1555  |
-
-
-
-
-It also shows a plot of the signal prediction and the fitted waves in the given directions.
-
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/117477025/215553083-31e7b77b-7d87-479f-a305-4445fadae784.jpg" width="900" height="700" alt>
-</p>
 
 
 ## References
