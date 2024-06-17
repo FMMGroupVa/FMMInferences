@@ -12,9 +12,9 @@ The code is developed in the programming language R.
 * `vDataMatrix`: double matrix. Each column contains the signal in a concrete direction.
 * `nBack`: number of FMM components to be fitted.
 * `maxIter`: maximum number of iterations for the backfitting algorithm.
-* `lengthAlphaGrid`: number of values in the equally spaced grid for $\alpha$. By default it is set to 48.
-* `lengthOmegaGrid`: number of values in the equally spaced grid for $\omega$. By default it is set to 24.
-* `showPredeterminedPlot`: logical. Is FMM model plotted after fitting?
+* `lengthAlphaGrid`: number of values in the equally spaced grid for $\alpha$. By default, it is set to 48.
+* `lengthOmegaGrid`: number of values in the equally spaced grid for $\omega$. By default, it is set to 24.
+* `showPredeterminedPlot`: logical. Is the FMM model plotted after fitting?
 
 If `vDataMatrix` columns are named, the names will be used to label the directions in the resulting plot. 
 
@@ -32,17 +32,14 @@ Plot of the signal prediction and the fitted waves in the example data (`example
 Confidence intervals based on the asymptotic parameter covariance matrix proposed in [1].
 
 ### Arguments
-* `paramsPerSignal` - output of `fitMultiFMM` function
-* `vDataMatrix` - data matrix fitted. Used for the estimate of sigma
+* `paramsPerSignal` - output of `fitMultiFMM` function.
+* `vDataMatrix` - data matrix fitted. Used for the estimate of sigma.
 * `confidenceLevel`: confidence level for the parameter intervals. By default, it is set to 0.95.
 
 If `vDataMatrix` columns are named, and the confidence intervals for the parameters
 
 ### Return values
-
-An R list with two elements:
-* `paramsPerWave`: 
-* `Confints`: confidence intervals for each parameter. The FMM parameters are named **parameter_component_direction**.
+Confidence intervals for each parameter. The FMM parameters **delta** and **gamma** are named as **parameter_component_direction**. **alpha** and **omega** parameters are common along directions and they are named **parameter_component**.
 
 Confidence interval (95%) for $\alpha$ and $\omega$ parameters (data: `exampleData.csv`):
 
