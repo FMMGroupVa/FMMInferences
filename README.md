@@ -32,8 +32,8 @@ Plot of the signal prediction and the fitted waves in the example data (`example
 Confidence intervals based on the asymptotic parameter covariance matrix proposed in [1].
 
 ### Arguments
-* `paramsPerSignal` - output of `fitMultiFMM` function.
-* `vDataMatrix` - data matrix fitted. Used for the estimate of sigma.
+* `paramsPerSignal`: output of `fitMultiFMM` function.
+* `vDataMatrix`: data matrix fitted. Used for the estimate of sigma.
 * `confidenceLevel`: confidence level for the parameter intervals. By default, it is set to 0.95.
 
 If `vDataMatrix` columns are named, and the confidence intervals for the parameters
