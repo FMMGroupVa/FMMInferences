@@ -3,7 +3,6 @@ require("RColorBrewer")
 require(R.utils)
 
 sourceDirectory("funcionesFMM/",modifiedOnly=F)
-source("auxMultiFMMPlotNew.R")
 source("auxMultiFMMPlot.R")
 source("precissionMatrix.R")
 
@@ -15,6 +14,7 @@ fitMultiFMM <- function(vDataMatrix, timePoints = seqTimes(nrow(vDataMatrix)), n
                       omegaGrid = exp(seq(log(max(omegaMin, omegaMin)), log(1), length.out = lengthOmegaGrid)),
                       showPredeterminedPlot = F,
                       parallelize = TRUE, confidenceLevel = 0.95, plotToFile = F, filename = NA){
+                      # parallelize and confidenceLevel arguments are unused
 
   nSignals <- ncol(vDataMatrix)
   nObs <- nrow(vDataMatrix)
@@ -108,16 +108,11 @@ fitMultiFMM <- function(vDataMatrix, timePoints = seqTimes(nrow(vDataMatrix)), n
                  plotToFile = plotToFile, filename = filename)
   }
 
-
   # Unname waves and stop parallelized cluster
   for(i in 1:nSignals) rownames(paramsPerWave[[i]])<-1:nBack
 
-  # Confidence Intervals calculus
-  CIs <- confint(paramsPerSignal = paramsPerWave, mData = vDataMatrix,
-                 nBack = nBack, nSignals = nSignals,
-                 compNames = 1:nBack,  confidenceLevel = 0.95)
   #### Return results ####
-  return(list(paramsPerWave = paramsPerWave, Confints = CIs))
+  return(paramsPerWave)
 }
 
 #### Internal multiFMM functions ####
@@ -274,9 +269,11 @@ recalculateMA<-function(vDatai, timePoints = seqTimes(nObs), paramsPerSignal){
   return(paramsPerSignal)
 }
 
-confint <- function(paramsPerSignal, mData,  nBack, nSignals,
-                    confidenceLevel = 0.95, compNames = 1:nBack){
+confintFMM <- function(paramsPerSignal, mData, confidenceLevel = 0.95, compNames = 1:nrow(paramsPerSignal[[1]])){
 
+  nSignals <- length(paramsPerSignal)
+  nBack <- nrow(paramsPerSignal[[1]])
+    
   estimatesArray <- array(0, c(nBack, 5, nSignals))
   for (k in 1:nSignals){ estimatesArray[,,k] <- as.matrix(paramsPerSignal[[k]][,-6]) }
   alphasHat <- estimatesArray[,3,1]; omegasHat <- estimatesArray[,5,1]
