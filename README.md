@@ -57,23 +57,6 @@ Confidence interval (95%) for $\alpha$ and $\omega$ parameters (data: `exampleDa
 | Upper (95%) | 0,0336  | 0,2029  | 0,0301  | 0,0380  | 0,1555  |
 
 
-## References
-
-[1] Seber, G. A. and Wild C. J. (2003). Nonlinear regression. *New Jersey: Jhon Wiley & Sons, 62(63):1238.*
-
-# Supplementary materials: FDA with Möbius Waves: Estimation of Signals and their Derivatives with Applications
-
-### Simulation code: Coverages and lengths.
-These files contain the code used to perform the inference simulations. It also contains the `SimulationResults.zip` folder with the results obtained for the paper.
-
-### PEV30 peak latency IC.
-This file contains the code used to estimate the peak latency of the PEV30 (Patient 5) and a bootstrap IC. Only 1 sample is available due to the data privacy.
-
-
-
-
-
-
 
 
 
