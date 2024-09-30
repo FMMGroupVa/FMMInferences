@@ -1,7 +1,7 @@
 #### Dependencies ####
 require("RColorBrewer")
 require(R.utils)
-
+library(parallel)
 sourceDirectory("funcionesFMM/",modifiedOnly=F)
 source("auxMultiFMMPlot.R")
 source("precissionMatrix.R")
@@ -10,7 +10,7 @@ source("precissionMatrix.R")
 fitMultiFMM <- function(vDataMatrix, timePoints = seqTimes(nrow(vDataMatrix)), nBack = 5, maxIter = 10, weightError = TRUE,
                         lengthAlphaGrid = 48, lengthOmegaGrid = 24,
                         alphaGrid = seq(0, 2*pi, length.out = lengthAlphaGrid),
-                        omegaMin = 0.001, omegaMax = 1,
+                        omegaMin = 0.001, omegaMax = 1, tolerance = sqrt(.Machine$double.eps),
                         omegaGrid = exp(seq(log(max(omegaMin, omegaMin)), log(1), length.out = lengthOmegaGrid)),
                         showPredeterminedPlot = F,
                         parallelize = TRUE, confidenceLevel = 0.95, plotToFile = F, filename = NA){
@@ -20,6 +20,13 @@ fitMultiFMM <- function(vDataMatrix, timePoints = seqTimes(nrow(vDataMatrix)), n
   nObs <- nrow(vDataMatrix)
   if(is.null(colnames(vDataMatrix))){
     colnames(vDataMatrix) <- paste0("Ch", 1:nSignals)
+  }
+  
+  if(parallelize){
+    num_cores <- detectCores()
+    cl <- makeCluster(num_cores-1)
+  }else{
+    cl <- NULL
   }
   
   #### Preparations for the fit ####
@@ -50,9 +57,10 @@ fitMultiFMM <- function(vDataMatrix, timePoints = seqTimes(nrow(vDataMatrix)), n
     for(j in 1:nBack){
       #### First Step: determine optimal common parameters (alpha and omega) ####
       optimalParams <- optimizeAlphaOmega(vDataMatrix = vDataMatrix, timePoints = timePoints,
-                                          baseGrid = gridList,
+                                          baseGrid = gridList, tolerance = tolerance,
                                           fittedWaves = fittedWaves, currentComp = j,
-                                          omegaMax = omegaMax, errorWeights = errorWeights)
+                                          omegaMax = omegaMax, errorWeights = errorWeights, 
+                                          cluster = cl)
       
       #### Second Step: fit single FMM wave in each signal with common parameters ####
       for(signalIndex in 1:nSignals){
@@ -110,6 +118,7 @@ fitMultiFMM <- function(vDataMatrix, timePoints = seqTimes(nrow(vDataMatrix)), n
   
   # Unname waves and stop parallelized cluster
   for(i in 1:nSignals) rownames(paramsPerWave[[i]])<-1:nBack
+  if (!is.null(cl)) stopCluster(cl)
   
   #### Return results ####
   return(paramsPerWave)
@@ -140,14 +149,14 @@ step2_commonAlphaOmega <- function(initialParams, timePoints = seqTimes(length(v
   initialOmega<-as.numeric(initialParams[2])
   
   tStar <- 2*atan(initialOmega*tan((timePoints-initialAlpha)/2))
-  
+  dM <- cbind(rep(1, length(timePoints)), cos(tStar), sin(tStar))
+  preMat <- solve(t(dM)%*%dM)%*%t(dM)
   # Calculates estimated component per lead
-  fittedValues <- apply(vDataMatrix, 2, function(x, tStar){
-    dM <- cbind(rep(1, length(x)), cos(tStar), sin(tStar))
-    mDeltaGamma <- solve(t(dM)%*%dM)%*%t(dM)%*%x
+  fittedValues <- apply(vDataMatrix, 2, function(x, tStar, preMat){
+    mDeltaGamma <- preMat%*%x
     yFit <- mDeltaGamma[1] + mDeltaGamma[2]*cos(tStar) + mDeltaGamma[3]*sin(tStar)
     return(yFit)
-  }, tStar = tStar)
+  }, tStar = tStar, preMat = preMat)
   
   # Weighted residuals
   residuales <- (vDataMatrix - fittedValues)^2
@@ -157,16 +166,22 @@ step2_commonAlphaOmega <- function(initialParams, timePoints = seqTimes(length(v
 }
 
 optimizeAlphaOmega<-function(vDataMatrix, timePoints, baseGrid, fittedWaves, currentComp,
-                             errorWeights, omegaMax = 0.7){
+                             errorWeights, omegaMax = 0.7, tolerance = sqrt(.Machine$double.eps),
+                             cluster = NULL){
   
   residualsMatrix<-as.matrix(vDataMatrix)
   for(signalIndex in 1:ncol(vDataMatrix)){
-    vData<-vDataMatrix[,signalIndex]; vData<-vData[!is.na(vData)]; nObs<-length(vData)
+    vData<-vDataMatrix[,signalIndex]; vData<-vData[!is.na(vData)]; 
     residualsMatrix[,signalIndex] <- vData - apply(as.matrix(fittedWaves[[signalIndex]][,-currentComp]), 1, sum)
   }
   # Grid step. RSS is a weighted mean of the RSS(i), i in cols(vDataMatrix)
-  step1 <- lapply(FUN = step1FMM3D, X = baseGrid, vDataMatrix = residualsMatrix,
-                  weights = errorWeights)
+  if(is.null(cluster)){
+    step1 <- lapply(X = baseGrid, FUN = step1FMM3D, vDataMatrix = residualsMatrix,
+                   weights = errorWeights)
+  }else{
+    step1 <- parLapply(cl = cluster, fun = step1FMM3D, X = baseGrid, 
+                       vDataMatrix = residualsMatrix, weights = errorWeights)
+  }
   
   step1 <- matrix(unlist(step1), ncol=3, byrow=T)
   
@@ -178,7 +193,8 @@ optimizeAlphaOmega<-function(vDataMatrix, timePoints, baseGrid, fittedWaves, cur
   # Post-optimization. Depends on (alpha, omega)
   nelderMead <- optim(par = c(alpha, omega), fn = step2_commonAlphaOmega,
                       vDataMatrix = residualsMatrix, method = "L-BFGS-B", timePoints = timePoints,
-                      lower = c(-2*pi, 0.0001), upper = c(4*pi, omegaMax), weights = errorWeights)
+                      lower = c(-2*pi, 0.0001), upper = c(4*pi, omegaMax), weights = errorWeights, 
+                      control = list(factr = max(tolerance, sqrt(.Machine$double.eps))))
   
   return(nelderMead$par[1:2])
 }
