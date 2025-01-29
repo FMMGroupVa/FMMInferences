@@ -205,7 +205,7 @@ optimizeOtherParameters <- function(vData, fixedParams, timePoints = seqTimes(le
   
   alpha <- as.numeric(fixedParams[1])
   omega <- as.numeric(fixedParams[2])
-  tStar <- alpha + 2*atan2(omega*sin((timePoints-alpha)/2), cos((timePoints-alpha)/2))
+  tStar <- 2*atan2(omega*sin((timePoints-alpha)/2), cos((timePoints-alpha)/2))
   
   dM <- cbind(rep(1, length(tStar)), cos(tStar), sin(tStar))
   mDeltaGamma <- solve(t(dM)%*%dM)%*%t(dM)%*%vData
@@ -220,7 +220,7 @@ optimizeOtherParameters <- function(vData, fixedParams, timePoints = seqTimes(le
     M = mDeltaGamma[1],
     A = sqrt(delta^2+gamma^2),
     alpha = alpha,
-    beta = atan2(-gamma, delta) + alpha,
+    beta = atan2(-gamma, delta),
     omega = omega,
     timePoints = timePoints,
     summarizedData = vData,
