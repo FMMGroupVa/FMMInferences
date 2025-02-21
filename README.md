@@ -1,13 +1,17 @@
-# FMMInferences
+# FMM Extensions
 
-This repository contains source codes to estimate 3DFMM model parameters and their confidence intervals. It also includes a code example in the `3DFMMUse.R` file.
+This repository contains source codes to perform the multichannel multicomponent FMM model (3DFMM) including functions to model fitting, visualization, and parameter inferences. An ejemplo de uso is inclute ThisIt also includes a code example in the `3DFMMUse.R` file.
 The code is developed in the programming language R.
 
-## `fitMultiFMM` function description.
+## Overview
+
+## How to use
+
+### `fitMultiFMM` function description.
 
 `fitMultiFMM` performs the estimation of a 3DFMM model .
 
-### Arguments
+#### Arguments
 
 * `vDataMatrix`: double matrix. Each column contains the signal in a concrete direction.
 * `nBack`: number of FMM components to be fitted.
@@ -18,7 +22,7 @@ The code is developed in the programming language R.
 
 If `vDataMatrix` columns are named, the names will be used to label the directions in the resulting plot. 
 
-### Return values
+#### Return values
 An `R` list. Each element of the list contains the estimated values of the FMM parameters in a concrete direction. 
 
 Plot of the signal prediction and the fitted waves in the example data (`exampleData.csv`):
@@ -27,18 +31,18 @@ Plot of the signal prediction and the fitted waves in the example data (`example
   <img src="https://user-images.githubusercontent.com/117477025/215553083-31e7b77b-7d87-479f-a305-4445fadae784.jpg" width="900" height="700" alt>
 </p>
 
-## `confintFMM` function description.
+### `confintFMM` function description.
 
 Confidence intervals based on the asymptotic parameter covariance matrix proposed in [1].
 
-### Arguments
+#### Arguments
 * `paramsPerSignal`: output of `fitMultiFMM` function.
 * `vDataMatrix`: data matrix fitted. Used for the estimate of sigma.
 * `confidenceLevel`: confidence level for the parameter intervals. By default, it is set to 0.95.
 
 If `vDataMatrix` columns are named, and the confidence intervals for the parameters
 
-### Return values
+#### Return values
 Confidence intervals for each parameter. The FMM parameters **delta** and **gamma** are named as **parameter_component_direction**. Parameters **alpha** and **omega** are common along directions and they are named **parameter_component**.
 
 Confidence interval (95%) for $\alpha$ and $\omega$ parameters (data: `exampleData.csv`):
