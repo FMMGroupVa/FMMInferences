@@ -1,7 +1,7 @@
 # FMM Extensions
 
-This repository contains source codes to perform the multichannel multicomponent FMM model (3DFMM) including functions to model fitting, visualization, and parameter inferences. An ejemplo de uso is inclute ThisIt also includes a code example in the `3DFMMUse.R` file.
-The code is developed in the programming language R.
+
+This repository contains source code for implementing the multichannel multicomponent FMM model (3DFMM), including functions for model fitting, visualization, and parameter inference. A usage example is provided (see `3DFMMUse.R` file) to assist users. The code is developed in the programming language R.
 
 ## Overview
 
